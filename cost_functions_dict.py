@@ -184,32 +184,59 @@ def testnn():
     return gradientDecend(X, y, layersizes, alpha, reg_para, epsilon, \
                               niter, small)
 
-def readdata():
-    imgsize = (128*2, 72*2)
+def readdata(rspath, imgsize):
     npixel = imgsize[0]*imgsize[1]
-    imgnames = fnmatch.filter(os.listdir(os.curdir), '*.jpg')
-    num_training = len(imgnames)
-    imgs = np.zeros(shape = (num_training, npixel))
-    for i in range(0, num_training):
-        imgs[i,:] = np.array(Image.open(imgnames[i]).resize(imgsize) \
-                    .convert('L').getdata()).ravel()
-    classifications = np.genfromtxt('training_class.txt').astype(int)
-    classifications [classifications > 1] = 0
-    layersizes = np.array([imgs.shape[1], 100, 100, 1])
-    return {'X': imgs, 'y': classifications, 'layersizes': layersizes}
+    ppath = os.path.join(rspath, 'person')
+    nppath = os.path.join(rspath, 'no_person')
+    imgnames_p = fnmatch.filter(os.listdir(ppath), '*.jpg')
+    imgnames_np = fnmatch.filter(os.listdir(nppath), '*.jpg')
+    num_ptraining = len(imgnames_p)
+    num_nptraining = len(imgnames_np)
+    imgs = np.zeros(shape = (num_ptraining + num_nptraining, npixel))
+    classes = np.zeros(shape = (num_ptraining + num_nptraining, 1))
+    """ loading images with person(s)"""
+    for i in range(0, num_ptraining):
+        imgs[i,:] = np.array(Image.open(os.path.join(ppath, imgnames_p[i]))\
+            .resize(imgsize).convert('L').getdata()).ravel()
+    classes[0:num_ptraining] = 1
+    """ loading images with no persons """
+    for i in range(0, num_nptraining):
+        imgs[num_ptraining + i,:] = np.array(Image.open(os.path.join(nppath, imgnames_np[i]))\
+            .resize(imgsize).convert('L').getdata()).ravel()
+    classes[num_ptraining:num_ptraining + num_nptraining] = 0
+    
+           
+    layersizes = np.array([npixel, 100, 100, 1])
+    return {'X': imgs / 255.0, 'y': classes, 'layersizes': layersizes}
+
+def readImgs(p2img, imgsize):
+    npixel = imgsize[0]*imgsize[1]
+    
+    imgnames = fnmatch.filter(os.listdir(p2img), '*.jpg')
+    nimg = len(imgnames)
+    imgs = np.zeros(shape = (nimg, npixel))
+    """ loading images with person(s)"""
+    for i in range(0, nimg):
+        imgs[i,:] = np.array(Image.open(os.path.join(p2img, imgnames[i]))\
+            .resize(imgsize).convert('L').getdata()).ravel()
+    return imgs
 
 def main():
     """Test the cost function and gradient calculations
     """   
     """response = testnn()"""
-    inputs = readdata()
-    X = inputs['X'] / 255.0
+    
+    """ load data from pre-classified folders """
+    rspath = os.path.join('..', 'resource')
+    imgsize = (128, 72)
+    inputs = readdata(rspath, imgsize)
+    X = inputs['X']
     y = inputs['y']
     layersizes = inputs['layersizes']
     reg_para = 1.0
-    alpha = 1
+    alpha = 0.5
     epsilon = 0.12
-    niter = 500
+    niter = 1000
     small = 0.1
     response = gradientDecend(X, y, layersizes, \
                               alpha, reg_para, epsilon, niter, small)
@@ -217,6 +244,8 @@ def main():
     print(response['costs'][-1])
     py = nnPredict(X, response['parameters']).reshape(y.shape)
     print((py == y).sum() * 1.0 / y.size * 1.0)
+    
+    
 
 
 if __name__ == '__main__':
