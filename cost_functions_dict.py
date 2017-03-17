@@ -232,7 +232,7 @@ def main():
     reg_para = 1.0
     alpha = 1
     epsilon = 0.12
-    niter = 600
+    niter = 1000
     small = 0.1
     response = gradientDecend(X, y, layersizes, \
                               alpha, reg_para, epsilon, niter, small)
