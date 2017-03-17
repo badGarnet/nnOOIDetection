@@ -188,25 +188,21 @@ def readdata(rspath, imgsize):
     npixel = imgsize[0]*imgsize[1]
     ppath = os.path.join(rspath, 'person')
     nppath = os.path.join(rspath, 'no_person')
-    imgnames_p = fnmatch.filter(os.listdir(ppath), '*.jpg')
-    imgnames_np = fnmatch.filter(os.listdir(nppath), '*.jpg')
-    num_ptraining = len(imgnames_p)
-    num_nptraining = len(imgnames_np)
-    imgs = np.zeros(shape = (num_ptraining + num_nptraining, npixel))
-    classes = np.zeros(shape = (num_ptraining + num_nptraining, 1))
-    """ loading images with person(s)"""
-    for i in range(0, num_ptraining):
-        imgs[i,:] = np.array(Image.open(os.path.join(ppath, imgnames_p[i]))\
-            .resize(imgsize).convert('L').getdata()).ravel()
-    classes[0:num_ptraining] = 1
-    """ loading images with no persons """
-    for i in range(0, num_nptraining):
-        imgs[num_ptraining + i,:] = np.array(Image.open(os.path.join(nppath, imgnames_np[i]))\
-            .resize(imgsize).convert('L').getdata()).ravel()
-    classes[num_ptraining:num_ptraining + num_nptraining] = 0
     
-           
+    imgp = readImgs(ppath, imgsize)
+    imgnp = readImgs(nppath, imgsize)
+    num_ptraining = imgp.shape[0]
+    num_nptraining = imgnp.shape[0]
+    imgs = np.concatenate((imgp, imgnp))
+    
+    """ predefined classes"""
+    classes = np.zeros(shape = (num_ptraining + num_nptraining, 1))
+    classes[0:num_ptraining] = 1
+    classes[num_ptraining:num_ptraining + num_nptraining] = 0   
+    
+    """ setting layers up """
     layersizes = np.array([npixel, 100, 100, 1])
+    
     return {'X': imgs / 255.0, 'y': classes, 'layersizes': layersizes}
 
 def readImgs(p2img, imgsize):
@@ -234,9 +230,9 @@ def main():
     y = inputs['y']
     layersizes = inputs['layersizes']
     reg_para = 1.0
-    alpha = 0.5
+    alpha = 1
     epsilon = 0.12
-    niter = 1000
+    niter = 600
     small = 0.1
     response = gradientDecend(X, y, layersizes, \
                               alpha, reg_para, epsilon, niter, small)
