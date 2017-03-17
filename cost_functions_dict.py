@@ -241,7 +241,9 @@ def main():
     py = nnPredict(X, response['parameters']).reshape(y.shape)
     print((py == y).sum() * 1.0 / y.size * 1.0)
     
-    
+    testimg = readImgs(os.path.join(rspath,'test'), imgsize) / 255.0
+    testy = nnPredict(testimg, response['parameters'])
+    print (testy)
 
 
 if __name__ == '__main__':
